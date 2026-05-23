@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Shipments Tracking | Heritage Textile Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="text-danger font-serif-italic"><i class="fa-solid fa-truck-fast me-2"></i>Shipments & Logistics</h2>
+        <p class="text-muted">Track outbound carrier handovers, delivery dates, and client signatures.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+        {% if session.get('role') in ['Admin', 'Inventory Manager'] %}
+            {% if pending_orders_select %}
+                <button class="btn btn-maroon" data-bs-toggle="collapse" data-bs-target="#createShipmentForm">
+                    <i class="fa-solid fa-truck-ramp-box me-2"></i>Dispatch New Shipment
+                </button>
+            {% else %}
+                <button class="btn btn-secondary" disabled title="No pending unshipped orders">
+                    <i class="fa-solid fa-circle-minus me-2"></i>No Orders Pending Dispatch
+                </button>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Collapsible Create Shipment Form -->
+{% if pending_orders_select %}
+<div class="collapse mb-4" id="createShipmentForm">
+    <div class="zari-box bg-white p-4">
+        <h5 class="text-danger font-serif-italic mb-3"><i class="fa-solid fa-box-open me-2"></i>Log Outbound Carrier Dispatch</h5>
+        <form action="{{ url_for('shipments') }}" method="POST">
+            <input type="hidden" name="action" value="create">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small">Select Unshipped Order</label>
+                    <select class="form-select" name="order_id" required>
+                        {% for o in pending_orders_select %}
+                            <option value="{{ o.order_id }}">Order #{{ o.order_id }} (Amt: &#8377;{{ o.total_amount }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Logistics Carrier Name</label>
+                    <input type="text" class="form-control" name="carrier_name" required placeholder="e.g. Heritage Express">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Tracking Number / AWB</label>
+                    <input type="text" class="form-control" name="tracking_number" required placeholder="e.g. HTX-908234671-IN">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small">Shipment Handover Date</label>
+                    <input type="date" class="form-control" name="shipment_date" required value="2026-05-23">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small">Estimated Delivery Date</label>
+                    <input type="date" class="form-control" name="estimated_delivery_date" required value="2026-05-28">
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-gold px-4"><i class="fa-solid fa-truck-arrow-right me-2"></i>Dispatch & Register Tracking</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="zari-box bg-white p-4">
+    <div class="table-responsive">
+        <table class="table table-hover table-heritage align-middle">
+            <thead>
+                <tr>
+                    <th>Shipment ID</th>
+                    <th>Order ID</th>
+                    <th>Customer Company</th>
+                    <th>Carrier Partner</th>
+                    <th>Tracking Number</th>
+                    <th>Ship Date</th>
+                    <th>Est Delivery</th>
+                    <th>Actual Delivery</th>
+                    <th>Status</th>
+                    <th class="text-center">Modify Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in shipments_list %}
+                    <tr>
+                        <td><code>#SHP-{{ "%04d"|format(s.shipment_id) }}</code></td>
+                        <td><code>#ORD-{{ "%04d"|format(s.order_id) }}</code></td>
+                        <td><strong>{{ s.company_name }}</strong></td>
+                        <td>{{ s.carrier_name }}</td>
+                        <td><code>{{ s.tracking_number }}</code></td>
+                        <td><code>{{ s.shipment_date }}</code></td>
+                        <td><code>{{ s.estimated_delivery_date or '-' }}</code></td>
+                        <td><code>{{ s.actual_delivery_date or '-' }}</code></td>
+                        <td>
+                            <span class="badge-status badge-status-{{ s.status.lower().replace(' ', '') }}">
+                                {{ s.status }}
+                            </span>
+                            {% if s.delivery_signature_name %}
+                                <div class="extra-small text-muted mt-1"><i class="fa-solid fa-signature me-1"></i>Signed: {{ s.delivery_signature_name }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if s.status != 'Delivered' %}
+                                {% if session.get('role') in ['Admin', 'Inventory Manager'] %}
+                                    <!-- Simple quick dropdown inline -->
+                                    <button class="btn btn-sm btn-outline-warning px-3" data-bs-toggle="collapse" data-bs-target="#updateShipCol{{ s.shipment_id }}"><i class="fa-solid fa-pen me-1"></i>Update</button>
+                                    
+                                    <div class="collapse mt-2 text-start" id="updateShipCol{{ s.shipment_id }}">
+                                        <div class="card p-2 bg-light border-warning">
+                                            <form action="{{ url_for('shipments') }}" method="POST">
+                                                <input type="hidden" name="action" value="update_status">
+                                                <input type="hidden" name="shipment_id" value="{{ s.shipment_id }}">
+                                                <div class="mb-2">
+                                                    <label class="extra-small text-dark font-serif-italic">Logistics Status</label>
+                                                    <select class="form-select form-select-sm" name="status" id="shipStatusSelect{{ s.shipment_id }}" onchange="toggleSigInput({{ s.shipment_id }})" required>
+                                                        <option value="In Transit" {% if s.status == 'In Transit' %}selected{% endif %}>In Transit</option>
+                                                        <option value="Out for Delivery" {% if s.status == 'Out for Delivery' %}selected{% endif %}>Out for Delivery</option>
+                                                        <option value="Delivered">Delivered</option>
+                                                        <option value="Delayed" {% if s.status == 'Delayed' %}selected{% endif %}>Delayed</option>
+                                                        <option value="Returned">Returned</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-2 d-none" id="sigGroup{{ s.shipment_id }}">
+                                                    <label class="extra-small text-dark font-serif-italic">Receiver Signature Name</label>
+                                                    <input type="text" class="form-control form-control-sm" name="delivery_signature_name" placeholder="Receiver full name">
+                                                </div>
+                                                <button type="submit" class="btn btn-xs btn-gold w-100 py-1">Save Status</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">No Permission</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted small"><i class="fa-solid fa-circle-check text-success me-1"></i>Archived</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center py-4 text-muted">No shipment dispatches logged.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleSigInput(shpId) {
+    const select = document.getElementById('shipStatusSelect' + shpId);
+    const sigGroup = document.getElementById('sigGroup' + shpId);
+    if(select.value === 'Delivered') {
+        sigGroup.classList.remove('d-none');
+        sigGroup.querySelector('input').setAttribute('required', 'required');
+    } else {
+        sigGroup.classList.add('d-none');
+        sigGroup.querySelector('input').removeAttribute('required');
+    }
+}
+</script>
+{% endblock %}

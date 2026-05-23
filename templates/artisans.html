@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Artisan Management | Heritage Textile Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="text-danger font-serif-italic"><i class="fa-solid fa-users me-2"></i>Master Weavers & Artisans</h2>
+        <p class="text-muted">Track weavers, skill certificates, cumulative output, and average quality scores.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+        {% if session.get('role') in ['Admin', 'Finance Manager'] %}
+            <button class="btn btn-maroon" data-bs-toggle="collapse" data-bs-target="#addArtisanForm">
+                <i class="fa-solid fa-user-plus me-2"></i>Register New Artisan
+            </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Collapsible Add Artisan Form -->
+<div class="collapse mb-4" id="addArtisanForm">
+    <div class="zari-box bg-white p-4">
+        <h5 class="text-danger font-serif-italic mb-3"><i class="fa-solid fa-address-card me-2"></i>Artisan Registry Profile</h5>
+        <form action="{{ url_for('artisans') }}" method="POST">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small">First Name</label>
+                    <input type="text" class="form-control" name="first_name" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Last Name</label>
+                    <input type="text" class="form-control" name="last_name" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Phone Contact</label>
+                    <input type="text" class="form-control" name="phone" required placeholder="e.g. 9876543204">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Email Address</label>
+                    <input type="email" class="form-control" name="email" placeholder="Optional">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Experience (Years)</label>
+                    <input type="number" class="form-control" name="experience_years" min="0" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Skill Certification</label>
+                    <select class="form-select" name="skill_level" required>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Master" selected>Master</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Weaving Specialization</label>
+                    <input type="text" class="form-control" name="specialization" required placeholder="e.g. Kanjeevaram Silk">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Base Wage / Meter (&#8377;)</label>
+                    <input type="number" step="0.01" class="form-control" name="base_wage_rate" min="1.00" required placeholder="350.00">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Award/Certification Details</label>
+                    <input type="text" class="form-control" name="certification_details" placeholder="e.g. State Merit Award">
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-gold px-4"><i class="fa-solid fa-circle-check me-2"></i>Save Registry Profile</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Artisans Table List -->
+<div class="zari-box bg-white p-4">
+    <div class="table-responsive">
+        <table class="table table-hover table-heritage align-middle">
+            <thead>
+                <tr>
+                    <th>Artisan ID</th>
+                    <th>Full Name</th>
+                    <th>Skill Level</th>
+                    <th>Specialization</th>
+                    <th>Exp. (Yrs)</th>
+                    <th>Total Batches</th>
+                    <th>Meters Produced</th>
+                    <th>Avg Quality</th>
+                    <th>Wages Earned</th>
+                    <th>Delays</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in artisans_list %}
+                    <tr>
+                        <td><code>ART-{{ "%03d"|format(a.artisan_id) }}</code></td>
+                        <td><strong>{{ a.artisan_name }}</strong></td>
+                        <td>
+                            <span class="badge bg-dark text-warning border border-warning">{{ a.skill_level }}</span>
+                        </td>
+                        <td>{{ a.specialization }}</td>
+                        <td>{{ a.experience_years }}</td>
+                        <td>{{ a.total_batches }}</td>
+                        <td>{{ a.total_meters_produced or 0.0 }}m</td>
+                        <td>
+                            {% if a.avg_quality_score %}
+                                <strong class="text-primary">{{ a.avg_quality_score }}%</strong>
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if a.total_wages_earned %}
+                                <strong class="text-success">&#8377;{{ "{:,.2f}".format(a.total_wages_earned) }}</strong>
+                            {% else %}
+                                <span class="text-muted">&#8377;0.00</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if a.delayed_batches_count > 0 %}
+                                <span class="badge bg-danger">{{ a.delayed_batches_count }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">0</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center py-4 text-muted">No artisans registered in database.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

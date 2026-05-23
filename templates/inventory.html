@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory & Suppliers | Heritage Textile Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="text-danger font-serif-italic"><i class="fa-solid fa-warehouse me-2"></i>Raw Material Inventory</h2>
+        <p class="text-muted">Monitor yarn stocks, zari threads, organic natural dyes, and suppliers.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+        {% if session.get('role') in ['Admin', 'Inventory Manager'] %}
+            <button class="btn btn-maroon" data-bs-toggle="collapse" data-bs-target="#updateStockForm">
+                <i class="fa-solid fa-pen-to-square me-2"></i>Update Stock Quantity
+            </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Collapsible Update Stock Form -->
+<div class="collapse mb-4" id="updateStockForm">
+    <div class="zari-box bg-white p-4">
+        <h5 class="text-danger font-serif-italic mb-3"><i class="fa-solid fa-sliders me-2"></i>Material Stock Adjuster</h5>
+        <form action="{{ url_for('inventory') }}" method="POST">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label small">Select Material</label>
+                    <select class="form-select" name="material_id" required>
+                        {% for m in materials_select %}
+                            <option value="{{ m.material_id }}">{{ m.material_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">New Absolute Stock Level</label>
+                    <input type="number" step="0.1" class="form-control" name="quantity" min="0" required placeholder="e.g. 25.5">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-gold w-100"><i class="fa-solid fa-rotate me-2"></i>Commit Stock Update</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Inventory Status Table -->
+<div class="zari-box bg-white p-4">
+    <div class="table-responsive">
+        <table class="table table-hover table-heritage align-middle">
+            <thead>
+                <tr>
+                    <th>Material ID</th>
+                    <th>Material Name</th>
+                    <th>Type</th>
+                    <th>Grade</th>
+                    <th>Current Stock</th>
+                    <th>Reorder Threshold</th>
+                    <th>Stock Status</th>
+                    <th>Active Alert Date</th>
+                    <th>Supplier Partner</th>
+                    <th>Supplier Phone</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in inventory_list %}
+                    <tr>
+                        <td><code>MAT-{{ "%03d"|format(item.material_id) }}</code></td>
+                        <td>
+                            <strong>{{ item.material_name }}</strong>
+                        </td>
+                        <td>{{ item.material_type }}</td>
+                        <td>{{ item.quality_grade }}</td>
+                        <td>
+                            <strong class="{% if item.stock_status in ['Low Stock', 'Out of Stock'] %}text-danger{% else %}text-dark{% endif %}">
+                                {{ item.stock_quantity }} {{ item.unit_of_measure }}
+                            </strong>
+                        </td>
+                        <td>{{ item.reorder_level }} {{ item.unit_of_measure }}</td>
+                        <td>
+                            <span class="badge-status badge-status-{{ item.stock_status.lower().replace(' ', '') }}">
+                                {{ item.stock_status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if item.last_alert_date != 'No Active Alert' %}
+                                <span class="badge bg-danger"><i class="fa-solid fa-bell me-1"></i>{{ item.last_alert_date }}</span>
+                            {% else %}
+                                <span class="text-muted small">No Alerts</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.supplier_name or 'N/A' }}</td>
+                        <td>
+                            {% if item.supplier_phone %}
+                                <a href="tel:{{ item.supplier_phone }}" class="text-decoration-none small"><i class="fa-solid fa-phone me-1"></i>{{ item.supplier_phone }}</a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center py-4 text-muted">No inventory records found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

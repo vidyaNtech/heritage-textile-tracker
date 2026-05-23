@@ -1,0 +1,414 @@
+{% extends "base.html" %}
+
+{% block title %}{{ session.get('role') }} Dashboard | Heritage Textile Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2">
+    <!-- Header -->
+    <div class="row align-items-center mb-4">
+        <div class="col-md-8">
+            {% if session.get('role') == 'Admin' %}
+                <h2 class="text-danger font-serif-italic mb-0"><i class="fa-solid fa-crown me-2 text-warning"></i>Admin Command Center</h2>
+                <p class="text-muted mb-0">Full system overview — all modules, KPIs, and supply chain data.</p>
+            {% elif session.get('role') == 'Inventory Manager' %}
+                <h2 class="text-danger font-serif-italic mb-0"><i class="fa-solid fa-warehouse me-2"></i>Inventory & Production Hub</h2>
+                <p class="text-muted mb-0">Monitor stock levels, manage production batches, and track shipments.</p>
+            {% elif session.get('role') == 'QC Inspector' %}
+                <h2 class="text-danger font-serif-italic mb-0"><i class="fa-solid fa-microscope me-2"></i>Quality Control Center</h2>
+                <p class="text-muted mb-0">Inspect completed batches, log quality scores, and manage rework items.</p>
+            {% elif session.get('role') == 'Finance Manager' %}
+                <h2 class="text-danger font-serif-italic mb-0"><i class="fa-solid fa-indian-rupee-sign me-2 text-success"></i>Finance & Revenue Portal</h2>
+                <p class="text-muted mb-0">Oversee wages, orders, revenue, and profitability analytics.</p>
+            {% endif %}
+        </div>
+        <div class="col-md-4 text-md-end mt-2 mt-md-0">
+            <span class="badge border border-warning text-warning p-2 me-2">
+                <i class="fa-solid fa-user-shield me-1"></i>{{ session.get('role') }}
+            </span>
+            <span class="text-muted small"><i class="fa-solid fa-clock me-1"></i>System Date: 2026-05-23</span>
+        </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- KPI METRIC CARDS — Role-specific selection                         -->
+    <!-- ================================================================== -->
+    <div class="row g-3 mb-4">
+
+        {# ---- ADMIN sees ALL 6 KPIs ---- #}
+        {% if session.get('role') == 'Admin' %}
+        <div class="col-6 col-lg-2">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+                <div class="kpi-value">{{ artisans_count }}</div>
+                <div class="kpi-label">Active Artisans</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-arrows-spin"></i></div>
+                <div class="kpi-value">{{ active_production }}</div>
+                <div class="kpi-label">Active Runs</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation text-danger"></i></div>
+                <div class="kpi-value text-danger">{{ low_stock_alerts }}</div>
+                <div class="kpi-label">Stock Alerts</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-indian-rupee-sign text-success"></i></div>
+                <div class="kpi-value text-success">&#8377;{{ "{:,.2f}".format(revenue) if revenue else "0.00" }}</div>
+                <div class="kpi-label">Revenue Booked</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-truck-fast"></i></div>
+                <div class="kpi-value">{{ shipments_count }}</div>
+                <div class="kpi-label">In Transit</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-circle-check text-primary"></i></div>
+                <div class="kpi-value text-primary">{{ qc_metrics }}%</div>
+                <div class="kpi-label">Avg QC Rating</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ---- INVENTORY MANAGER sees Stock, Production, Shipments ---- #}
+        {% if session.get('role') == 'Inventory Manager' %}
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation text-danger"></i></div>
+                <div class="kpi-value text-danger">{{ low_stock_alerts }}</div>
+                <div class="kpi-label">Stock Alerts</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-arrows-spin"></i></div>
+                <div class="kpi-value">{{ active_production }}</div>
+                <div class="kpi-label">Active Production Runs</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-truck-fast"></i></div>
+                <div class="kpi-value">{{ shipments_count }}</div>
+                <div class="kpi-label">Shipments In Transit</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+                <div class="kpi-value">{{ materials_count }}</div>
+                <div class="kpi-label">Material Types Tracked</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ---- QC INSPECTOR sees QC, Production, Artisans ---- #}
+        {% if session.get('role') == 'QC Inspector' %}
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-circle-check text-primary"></i></div>
+                <div class="kpi-value text-primary">{{ qc_metrics }}%</div>
+                <div class="kpi-label">Avg QC Rating</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                <div class="kpi-value">{{ pending_inspections }}</div>
+                <div class="kpi-label">Pending Inspections</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-arrows-spin"></i></div>
+                <div class="kpi-value">{{ active_production }}</div>
+                <div class="kpi-label">Active Batches</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+                <div class="kpi-value">{{ artisans_count }}</div>
+                <div class="kpi-label">Active Artisans</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ---- FINANCE MANAGER sees Revenue, Wages, Orders, Artisans ---- #}
+        {% if session.get('role') == 'Finance Manager' %}
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-indian-rupee-sign text-success"></i></div>
+                <div class="kpi-value text-success">&#8377;{{ "{:,.2f}".format(revenue) if revenue else "0.00" }}</div>
+                <div class="kpi-label">Revenue Booked</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-money-check-dollar"></i></div>
+                <div class="kpi-value">{{ pending_wages }}</div>
+                <div class="kpi-label">Pending Wage Payments</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                <div class="kpi-value">{{ total_orders }}</div>
+                <div class="kpi-label">Total Orders</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card p-3">
+                <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+                <div class="kpi-value">{{ artisans_count }}</div>
+                <div class="kpi-label">Active Artisans</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- QUICK-ACCESS MODULE CARDS — Role-specific                          -->
+    <!-- ================================================================== -->
+
+    {# ---- ADMIN: Full access to all modules ---- #}
+    {% if session.get('role') == 'Admin' %}
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="zari-box bg-white p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="font-serif-italic text-danger mb-0"><i class="fa-solid fa-spinner spinner me-2"></i>Active Supply Chain Batches</h5>
+                    <a href="{{ url_for('production') }}" class="btn btn-sm btn-maroon"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i>Open Module</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-heritage align-middle">
+                        <thead>
+                            <tr>
+                                <th>Batch ID</th>
+                                <th>Design Motif</th>
+                                <th>Assigned Artisan</th>
+                                <th>Loom Type</th>
+                                <th>Target Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in active_batches %}
+                                <tr>
+                                    <td><code>#{{ b.batch_id }}</code></td>
+                                    <td><strong>{{ b.design_name }}</strong></td>
+                                    <td>{{ b.artisan_name }}</td>
+                                    <td>{{ b.loom_type }}</td>
+                                    <td><code>{{ b.target_completion_date }}</code></td>
+                                    <td>
+                                        <span class="badge-status badge-status-{{ b.timeline_status.lower().replace(' ', '') }}">
+                                            {{ b.timeline_status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No active batches running.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="zari-box bg-white p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="font-serif-italic text-danger mb-0"><i class="fa-solid fa-circle-exclamation me-2"></i>Procurement Stock Warnings</h5>
+                    <a href="{{ url_for('inventory') }}" class="btn btn-sm btn-outline-warning"><i class="fa-solid fa-dolly me-1"></i>Audit Stock</a>
+                </div>
+                {% for a in alerts_list %}
+                    <div class="alert alert-light border-warning p-2 mb-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="text-dark small">{{ a.material_name }}</strong><br>
+                            <span class="text-muted extra-small">Supplier: {{ a.supplier_name }}</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-danger">{{ a.stock_quantity }} {{ a.unit_of_measure }}</span>
+                            <div class="extra-small text-muted mt-1">Reorder: {{ a.reorder_level }}</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fa-regular fa-circle-check fa-3x text-success mb-2"></i>
+                        <p class="text-muted small">All material levels are sufficient. No critical reorders needed.</p>
+                    </div>
+                {% endfor %}
+                
+                <div class="mt-4 pt-2 border-top">
+                    <a href="{{ url_for('analytics') }}" class="btn btn-gold w-100 mb-2"><i class="fa-solid fa-chart-pie me-2"></i>View Business Analytics</a>
+                    <a href="{{ url_for('verify') }}" class="btn btn-outline-dark w-100"><i class="fa-solid fa-barcode me-2"></i>Open Public Verification</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ---- INVENTORY MANAGER: Stock alerts + Production batches ---- #}
+    {% if session.get('role') == 'Inventory Manager' %}
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="zari-box bg-white p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="font-serif-italic text-danger mb-0"><i class="fa-solid fa-circle-exclamation me-2"></i>Stock Warnings</h5>
+                    <a href="{{ url_for('inventory') }}" class="btn btn-sm btn-maroon"><i class="fa-solid fa-warehouse me-1"></i>Manage Inventory</a>
+                </div>
+                {% for a in alerts_list %}
+                    <div class="alert alert-light border-warning p-2 mb-2 d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="text-dark small">{{ a.material_name }}</strong><br>
+                            <span class="text-muted extra-small">Supplier: {{ a.supplier_name }}</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-danger">{{ a.stock_quantity }} {{ a.unit_of_measure }}</span>
+                            <div class="extra-small text-muted mt-1">Reorder: {{ a.reorder_level }}</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fa-regular fa-circle-check fa-3x text-success mb-2"></i>
+                        <p class="text-muted small">All material levels sufficient.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="zari-box bg-white p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="font-serif-italic text-danger mb-0"><i class="fa-solid fa-spinner spinner me-2"></i>Active Batches</h5>
+                    <a href="{{ url_for('production') }}" class="btn btn-sm btn-maroon"><i class="fa-solid fa-arrows-spin me-1"></i>Production</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-heritage align-middle small">
+                        <thead>
+                            <tr><th>Batch</th><th>Design</th><th>Artisan</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for b in active_batches %}
+                            <tr>
+                                <td><code>#{{ b.batch_id }}</code></td>
+                                <td>{{ b.design_name }}</td>
+                                <td>{{ b.artisan_name }}</td>
+                                <td><span class="badge-status badge-status-{{ b.timeline_status.lower().replace(' ', '') }}">{{ b.timeline_status }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-center py-3 text-muted">No active batches.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Quick access buttons -->
+    <div class="row g-3">
+        <div class="col-md-4"><a href="{{ url_for('inventory') }}" class="btn btn-maroon w-100 py-3"><i class="fa-solid fa-warehouse me-2"></i>Inventory Dashboard</a></div>
+        <div class="col-md-4"><a href="{{ url_for('production') }}" class="btn btn-gold w-100 py-3"><i class="fa-solid fa-arrows-spin me-2"></i>Production Tracking</a></div>
+        <div class="col-md-4"><a href="{{ url_for('shipments') }}" class="btn btn-outline-dark w-100 py-3"><i class="fa-solid fa-truck-fast me-2"></i>Shipment Tracking</a></div>
+    </div>
+    {% endif %}
+
+    {# ---- QC INSPECTOR: Pending inspections + QC module access ---- #}
+    {% if session.get('role') == 'QC Inspector' %}
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="zari-box bg-white p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="font-serif-italic text-danger mb-0"><i class="fa-solid fa-clipboard-check me-2"></i>Batches Awaiting Inspection</h5>
+                    <a href="{{ url_for('qc') }}" class="btn btn-sm btn-maroon"><i class="fa-solid fa-check-double me-1"></i>Open QC Module</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-heritage align-middle">
+                        <thead>
+                            <tr><th>Batch ID</th><th>Design Motif</th><th>Artisan</th><th>Loom</th><th>Target Date</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for b in active_batches %}
+                            <tr>
+                                <td><code>#{{ b.batch_id }}</code></td>
+                                <td><strong>{{ b.design_name }}</strong></td>
+                                <td>{{ b.artisan_name }}</td>
+                                <td>{{ b.loom_type }}</td>
+                                <td><code>{{ b.target_completion_date }}</code></td>
+                                <td><span class="badge-status badge-status-{{ b.timeline_status.lower().replace(' ', '') }}">{{ b.timeline_status }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="6" class="text-center py-4 text-muted">No batches awaiting inspection.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="zari-box bg-white p-4 h-100">
+                <h5 class="font-serif-italic text-danger mb-3"><i class="fa-solid fa-users me-2"></i>Artisan Roster</h5>
+                <p class="text-muted small">View artisan skill levels and specializations for quality assessment context.</p>
+                <a href="{{ url_for('artisans') }}" class="btn btn-outline-dark w-100 mb-2"><i class="fa-solid fa-users me-2"></i>View Artisans</a>
+                <a href="{{ url_for('qc') }}" class="btn btn-gold w-100"><i class="fa-solid fa-check-double me-2"></i>Log New Inspection</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ---- FINANCE MANAGER: Revenue, wages, orders ---- #}
+    {% if session.get('role') == 'Finance Manager' %}
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="zari-box bg-white p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="font-serif-italic text-danger mb-0"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Recent Orders</h5>
+                    <a href="{{ url_for('orders') }}" class="btn btn-sm btn-maroon"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i>All Orders</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-heritage align-middle">
+                        <thead>
+                            <tr><th>Batch ID</th><th>Design Motif</th><th>Artisan</th><th>Loom</th><th>Target Date</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for b in active_batches %}
+                            <tr>
+                                <td><code>#{{ b.batch_id }}</code></td>
+                                <td><strong>{{ b.design_name }}</strong></td>
+                                <td>{{ b.artisan_name }}</td>
+                                <td>{{ b.loom_type }}</td>
+                                <td><code>{{ b.target_completion_date }}</code></td>
+                                <td><span class="badge-status badge-status-{{ b.timeline_status.lower().replace(' ', '') }}">{{ b.timeline_status }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="6" class="text-center py-4 text-muted">No recent orders.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="zari-box bg-white p-4 h-100">
+                <h5 class="font-serif-italic text-danger mb-3"><i class="fa-solid fa-calculator me-2"></i>Quick Finance Actions</h5>
+                <a href="{{ url_for('wages') }}" class="btn btn-maroon w-100 mb-2"><i class="fa-solid fa-indian-rupee-sign me-2"></i>Process Wage Payments</a>
+                <a href="{{ url_for('orders') }}" class="btn btn-gold w-100 mb-2"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Manage Orders</a>
+                <a href="{{ url_for('artisans') }}" class="btn btn-outline-dark w-100 mb-2"><i class="fa-solid fa-users me-2"></i>Artisan Registry</a>
+                <a href="{{ url_for('analytics') }}" class="btn btn-outline-dark w-100"><i class="fa-solid fa-chart-pie me-2"></i>Profitability Analytics</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

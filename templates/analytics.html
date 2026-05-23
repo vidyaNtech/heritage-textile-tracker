@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}BI Analytics | Heritage Textile Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="text-danger font-serif-italic"><i class="fa-solid fa-chart-pie me-2"></i>Supply Chain BI Analytics</h2>
+        <p class="text-muted">Interactive operational dashboards querying database views and complex analytical indicators.</p>
+    </div>
+</div>
+
+<!-- Chart Slots Grid -->
+<div class="row g-4 mb-5">
+    <!-- Chart 1: Production Efficiency -->
+    <div class="col-lg-6">
+        <div class="zari-box bg-white p-4 h-100">
+            <h5 class="font-serif-italic text-danger mb-3"><i class="fa-solid fa-business-time me-2"></i>Artisan Production Efficiency</h5>
+            <p class="extra-small text-muted mb-2">Compares the average estimated weaving days against actual completion times per batch (Variance Analysis).</p>
+            <div style="height: 300px; position: relative;">
+                <canvas id="efficiencyChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 2: Bottlenecks & Delays -->
+    <div class="col-lg-6">
+        <div class="zari-box bg-white p-4 h-100">
+            <h5 class="font-serif-italic text-danger mb-3"><i class="fa-solid fa-triangle-exclamation me-2"></i>Supply Chain Bottlenecks & Delays</h5>
+            <p class="extra-small text-muted mb-2">Logs total delay incidents and cumulative delay durations (in days) grouped by category.</p>
+            <div style="height: 300px; position: relative;">
+                <canvas id="delaysChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 3: Sustainability Dashboard -->
+    <div class="col-lg-6">
+        <div class="zari-box bg-white p-4 h-100">
+            <h5 class="font-serif-italic text-danger mb-3"><i class="fa-solid fa-leaf me-2"></i>Environmental Sustainability Index</h5>
+            <p class="extra-small text-muted mb-4">Tracks percentage of organic/eco-friendly fibers and natural madder/indigo dye ratios in production.</p>
+            
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center">
+                    <div style="height: 180px; position: relative;">
+                        <canvas id="sustainabilityChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6 mt-3 mt-md-0">
+                    <div class="p-3 bg-light rounded border border-warning">
+                        <h6 class="small text-danger font-serif-italic mb-2">Active Eco Performance</h6>
+                        <p class="small mb-1"><strong>Organic Fibers Usage:</strong> <span id="lblEcoPercent">0</span>%</p>
+                        <div class="progress mb-2" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" id="barEcoPercent" style="width: 0%;"></div>
+                        </div>
+                        <p class="small mb-0"><strong>Natural Dye Ratio:</strong> <span id="lblDyePercent">0</span>%</p>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar" id="barDyePercent" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 4: Profitability Stack -->
+    <div class="col-lg-6">
+        <div class="zari-box bg-white p-4 h-100">
+            <h5 class="font-serif-italic text-danger mb-3"><i class="fa-solid fa-scale-balanced me-2"></i>Relational Ledger & Profit Margins</h5>
+            <p class="extra-small text-muted mb-2">Compares total production cost (material + artisan wages) against average revenue to calculate net margins.</p>
+            <div style="height: 300px; position: relative;">
+                <canvas id="profitabilityChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Styling constants
+    const MAROON = '#4A0E17';
+    const GOLD = '#D4AF37';
+    const GOLD_LIGHT = '#F3E5AB';
+    const CHARCOAL = '#2A1B18';
+    
+    // ------------------------------------------------------------------------
+    // Chart 1: Artisan Efficiency Bar Chart
+    // ------------------------------------------------------------------------
+    fetch('/api/analytics/production_efficiency')
+        .then(res => res.json())
+        .then(data => {
+            new Chart(document.getElementById('efficiencyChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'Estimated Days',
+                            data: data.estimated,
+                            backgroundColor: GOLD_LIGHT,
+                            borderColor: GOLD,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Actual Days Taken',
+                            data: data.actual,
+                            backgroundColor: MAROON,
+                            borderColor: '#30080d',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Weaving Duration (Days)' }
+                        }
+                    }
+                }
+            });
+        });
+
+    // ------------------------------------------------------------------------
+    // Chart 2: Delays Doughnut / Pie Chart
+    // ------------------------------------------------------------------------
+    fetch('/api/analytics/delays')
+        .then(res => res.json())
+        .then(data => {
+            new Chart(document.getElementById('delaysChart').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.categories,
+                    datasets: [{
+                        label: 'Delay Days Logged',
+                        data: data.days,
+                        backgroundColor: [MAROON, '#8C6239', GOLD, '#fd7e14', '#201311'],
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        });
+
+    // ------------------------------------------------------------------------
+    // Chart 3: Sustainability Pie Chart & Stats
+    // ------------------------------------------------------------------------
+    fetch('/api/analytics/sustainability')
+        .then(res => res.json())
+        .then(data => {
+            // Update labels and progress bars
+            document.getElementById('lblEcoPercent').innerText = data.eco_material_percentage || 0;
+            document.getElementById('barEcoPercent').style.width = (data.eco_material_percentage || 0) + '%';
+            document.getElementById('lblDyePercent').innerText = data.natural_dye_ratio_percent || 0;
+            document.getElementById('barDyePercent').style.width = (data.natural_dye_ratio_percent || 0) + '%';
+
+            new Chart(document.getElementById('sustainabilityChart').getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: ['Natural Dyes (kg)', 'Synthetic Dyes (kg)'],
+                    datasets: [{
+                        data: [data.natural_dye_kg || 0, data.synthetic_dye_kg || 0],
+                        backgroundColor: ['#198754', '#dc3545'],
+                        borderColor: '#fff',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        });
+
+    // ------------------------------------------------------------------------
+    // Chart 4: Profitability Ledger Line/Bar Chart
+    // ------------------------------------------------------------------------
+    fetch('/api/analytics/profitability')
+        .then(res => res.json())
+        .then(data => {
+            new Chart(document.getElementById('profitabilityChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: data.designs,
+                    datasets: [
+                        {
+                            label: 'Total Cost',
+                            data: data.costs,
+                            backgroundColor: 'rgba(220, 53, 69, 0.75)',
+                            borderColor: '#dc3545',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Booked Revenue',
+                            data: data.revenue,
+                            backgroundColor: 'rgba(25, 135, 84, 0.75)',
+                            borderColor: '#198754',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Net Profit Margin',
+                            data: data.profits,
+                            type: 'line',
+                            borderColor: GOLD,
+                            backgroundColor: GOLD,
+                            tension: 0.2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Financials (&#8377;)' }
+                        }
+                    }
+                }
+            });
+        });
+});
+</script>
+{% endblock %}

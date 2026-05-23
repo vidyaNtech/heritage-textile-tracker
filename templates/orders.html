@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Orders | Heritage Textile Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="text-danger font-serif-italic"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Customer Purchases & Orders</h2>
+        <p class="text-muted">Register customer accounts, log custom weave orders, and link production runs.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+        {% if session.get('role') in ['Admin', 'Finance Manager'] %}
+            <button class="btn btn-maroon" data-bs-toggle="collapse" data-bs-target="#createOrderForm">
+                <i class="fa-solid fa-cart-plus me-2"></i>Create New Order
+            </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Collapsible Create Order Form -->
+<div class="collapse mb-4" id="createOrderForm">
+    <div class="zari-box bg-white p-4">
+        <h5 class="text-danger font-serif-italic mb-3"><i class="fa-solid fa-file-signature me-2"></i>New Purchase Checkout</h5>
+        <form action="{{ url_for('orders') }}" method="POST">
+            <div class="row g-3">
+                <!-- Customer Details -->
+                <div class="col-md-4">
+                    <label class="form-label small">Customer Name (Contact)</label>
+                    <input type="text" class="form-control" name="contact_name" required placeholder="e.g. Ananya Sen">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Company / Boutique Name</label>
+                    <input type="text" class="form-control" name="company_name" placeholder="Optional">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Contact Phone</label>
+                    <input type="text" class="form-control" name="phone" required placeholder="e.g. 9812345678">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small">Contact Email</label>
+                    <input type="email" class="form-control" name="email" required placeholder="email@boutique.com">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small">Shipping Address</label>
+                    <input type="text" class="form-control" name="shipping_address" required placeholder="Delivery address">
+                </div>
+                
+                <!-- Order Item details -->
+                <div class="col-md-4 border-top pt-2">
+                    <label class="form-label small">Ordered Design</label>
+                    <select class="form-select" name="design_id" required>
+                        {% for d in designs_list %}
+                            <option value="{{ d.design_id }}">{{ d.design_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 border-top pt-2">
+                    <label class="form-label small">Quantity (Meters)</label>
+                    <input type="number" step="0.1" class="form-control" name="quantity" min="0.1" required placeholder="10.0">
+                </div>
+                <div class="col-md-2 border-top pt-2">
+                    <label class="form-label small">Unit Price / Meter (&#8377;)</label>
+                    <input type="number" class="form-control" name="price" min="0.01" required placeholder="5000">
+                </div>
+                <div class="col-md-2 border-top pt-2">
+                    <label class="form-label small">Order Date</label>
+                    <input type="date" class="form-control" name="order_date" required value="2026-05-23">
+                </div>
+                <div class="col-md-2 border-top pt-2">
+                    <label class="form-label small">Delivery Deadline</label>
+                    <input type="date" class="form-control" name="required_date" required value="2026-06-25">
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-gold px-4"><i class="fa-solid fa-bag-shopping me-2"></i>Place Secure Order</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Orders Table -->
+<div class="zari-box bg-white p-4">
+    <div class="table-responsive">
+        <table class="table table-hover table-heritage align-middle">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer / Company</th>
+                    <th>Order Date</th>
+                    <th>Deadline</th>
+                    <th>Designs Ordered</th>
+                    <th>Total Meters</th>
+                    <th>Order Amount</th>
+                    <th>Status</th>
+                    <th>Tracking Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in orders_list %}
+                    <tr>
+                        <td><code>#ORD-{{ "%04d"|format(o.order_id) }}</code></td>
+                        <td>
+                            <strong>{{ o.customer_name }}</strong><br>
+                            <span class="text-muted small">{{ o.company_name or 'Personal' }}</span>
+                        </td>
+                        <td><code>{{ o.order_date }}</code></td>
+                        <td><code>{{ o.required_delivery_date }}</code></td>
+                        <td>{{ o.distinct_designs_ordered }} types</td>
+                        <td>{{ o.total_meters_ordered }}m</td>
+                        <td><strong class="text-success">&#8377;{{ "{:,.2f}".format(o.total_amount) }}</strong></td>
+                        <td>
+                            <span class="badge-status badge-status-{{ o.order_status.lower() }}">
+                                {{ o.order_status }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if o.tracking_number != 'Not Shipped' %}
+                                <a href="{{ url_for('shipments') }}" class="badge bg-dark text-warning border border-warning text-decoration-none">
+                                    <i class="fa-solid fa-truck me-1"></i>{{ o.tracking_number }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted small font-serif-italic">Unshipped</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-muted">No customer orders recorded in database.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

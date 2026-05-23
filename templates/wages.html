@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Wage Payouts | Heritage Textile Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="text-danger font-serif-italic"><i class="fa-solid fa-indian-rupee-sign me-2"></i>Artisan Wages & Payouts</h2>
+        <p class="text-muted">Process wages calculated by completed batches and automatically audited by QC inspection bonuses/penalties.</p>
+    </div>
+</div>
+
+<div class="zari-box bg-white p-4">
+    <div class="table-responsive">
+        <table class="table table-hover table-heritage align-middle">
+            <thead>
+                <tr>
+                    <th>Payment ID</th>
+                    <th>Artisan Name</th>
+                    <th>Batch Details</th>
+                    <th>Calculation Date</th>
+                    <th>Gross Base Wage</th>
+                    <th>QC Quality Bonus</th>
+                    <th>QC Defect Penalty</th>
+                    <th>Net Payout Due</th>
+                    <th>Status</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in wages_list %}
+                    <tr>
+                        <td><code>#PAY-{{ "%04d"|format(w.payment_id) }}</code></td>
+                        <td><strong>{{ w.artisan_name }}</strong></td>
+                        <td>
+                            <span class="small">Batch #{{ w.batch_id }} ({{ w.design_name }} - {{ w.quantity_meters }}m)</span>
+                        </td>
+                        <td><code>{{ w.payment_date }}</code></td>
+                        <td>&#8377;{{ "{:,.2f}".format(w.calculated_wage) }}</td>
+                        <td>
+                            {% if w.bonus_applied > 0.0 %}
+                                <span class="text-success small">+&#8377;{{ "{:,.2f}".format(w.bonus_applied) }}</span>
+                            {% else %}
+                                <span class="text-muted small">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if w.deductions > 0.0 %}
+                                <span class="text-danger small">-&#8377;{{ "{:,.2f}".format(w.deductions) }}</span>
+                            {% else %}
+                                <span class="text-muted small">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong class="text-dark">&#8377;{{ "{:,.2f}".format(w.net_wage) }}</strong>
+                        </td>
+                        <td>
+                            <span class="badge-status badge-status-{{ w.payment_status.lower() }}">
+                                {{ w.payment_status }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            {% if w.payment_status == 'Pending' %}
+                                {% if session.get('role') in ['Admin', 'Finance Manager'] %}
+                                    <form action="{{ url_for('wages') }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="payment_id" value="{{ w.payment_id }}">
+                                        <button type="submit" class="btn btn-sm btn-success px-3"><i class="fa-solid fa-credit-card me-1"></i>Release Pay</button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-muted small">No Permission</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted small"><i class="fa-solid fa-circle-check text-success me-1"></i>Settled</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center py-4 text-muted">No wage payments generated yet. Complete batches to trigger wages.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
