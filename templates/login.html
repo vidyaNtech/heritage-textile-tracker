@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Login | Heritage Textile Intelligence{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="login-card">
+                <div class="login-header">
+                    <h4><i class="fa-solid fa-lock text-warning me-2"></i>Staff Portal</h4>
+                    <span class="text-white-50 small font-serif-italic">Authorized Admin Access Only</span>
+                </div>
+                <div class="p-4 bg-white">
+                    <form action="{{ url_for('login') }}" method="POST">
+                        <div class="mb-3">
+                            <label for="username" class="form-label font-serif-italic">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-user"></i></span>
+                                <input type="text" class="form-control border-secondary" id="username" name="username" placeholder="Enter username" required>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label for="password" class="form-label font-serif-italic">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted"><i class="fa-solid fa-key"></i></span>
+                                <input type="password" class="form-control border-secondary" id="password" name="password" placeholder="Enter password" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-maroon w-100 py-2"><i class="fa-solid fa-right-to-bracket me-2"></i>Secure Sign In</button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Quick Demo Access Guides -->
+            <div class="zari-box bg-white p-3 mt-4 text-center">
+                <h6 class="text-danger font-serif-italic mb-2"><i class="fa-solid fa-circle-info me-2"></i>Academic Evaluator Demo Credentials</h6>
+                <table class="table table-sm table-borderless small mb-0">
+                    <thead>
+                        <tr class="border-bottom">
+                            <th>Username</th>
+                            <th>Password</th>
+                            <th>Role Position</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>admin_user</code></td>
+                            <td><code>admin</code></td>
+                            <td>System Administrator</td>
+                        </tr>
+                        <tr>
+                            <td><code>inv_mgr</code></td>
+                            <td><code>inv</code></td>
+                            <td>Inventory Manager</td>
+                        </tr>
+                        <tr>
+                            <td><code>qc_inspect</code></td>
+                            <td><code>qc</code></td>
+                            <td>QC Inspector</td>
+                        </tr>
+                        <tr>
+                            <td><code>fin_mgr</code></td>
+                            <td><code>fin</code></td>
+                            <td>Finance Manager</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

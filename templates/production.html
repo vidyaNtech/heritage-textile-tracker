@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Production Tracker | Heritage Textile Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="text-danger font-serif-italic"><i class="fa-solid fa-arrows-spin me-2"></i>Textile Production Lifecycle</h2>
+        <p class="text-muted">Schedule batches, update status, and log unexpected bottlenecks in weavers' workflows.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+        {% if session.get('role') in ['Admin', 'Inventory Manager'] %}
+            <button class="btn btn-maroon" data-bs-toggle="collapse" data-bs-target="#scheduleBatchForm">
+                <i class="fa-solid fa-calendar-plus me-2"></i>Schedule Production Run
+            </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Collapsible Schedule Batch Form -->
+<div class="collapse mb-4" id="scheduleBatchForm">
+    <div class="zari-box bg-white p-4">
+        <h5 class="text-danger font-serif-italic mb-3"><i class="fa-solid fa-scissors me-2"></i>Initialize Production Weave Run</h5>
+        <form action="{{ url_for('production') }}" method="POST">
+            <input type="hidden" name="action" value="schedule">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small">Select Design Motif</label>
+                    <select class="form-select" name="design_id" required>
+                        {% for d in designs_list %}
+                            <option value="{{ d.design_id }}">{{ d.design_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Assign Weaver / Artisan</label>
+                    <select class="form-select" name="artisan_id" required>
+                        {% for a in artisans_list %}
+                            <option value="{{ a.artisan_id }}">{{ a.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Assign Weaving Loom</label>
+                    <select class="form-select" name="loom_id" required>
+                        {% for l in looms_list %}
+                            <option value="{{ l.loom_id }}">{{ l.loom_type }} (Loom #{{ l.loom_id }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Quantity (Meters)</label>
+                    <input type="number" step="0.1" class="form-control" name="quantity_meters" min="0.1" required placeholder="e.g. 15.0">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Start Date</label>
+                    <input type="date" class="form-control" name="start_date" required value="2026-05-23">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Target Completion Date</label>
+                    <input type="date" class="form-control" name="target_completion_date" required value="2026-06-15">
+                </div>
+                
+                <!-- Material usages (Up to 2 materials) -->
+                <div class="col-md-4 border-start border-warning pl-3">
+                    <h6 class="text-danger small font-serif-italic">Material Allotment #1</h6>
+                    <div class="row g-2">
+                        <div class="col-8">
+                            <select class="form-select form-select-sm" name="material1_id">
+                                <option value="">(Select Material)</option>
+                                {% for rm in materials_list %}
+                                    <option value="{{ rm.material_id }}">{{ rm.material_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <input type="number" step="0.1" class="form-control form-control-sm" name="material1_qty" placeholder="kg">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 border-start border-warning pl-3 offset-md-8">
+                    <h6 class="text-danger small font-serif-italic">Material Allotment #2</h6>
+                    <div class="row g-2">
+                        <div class="col-8">
+                            <select class="form-select form-select-sm" name="material2_id">
+                                <option value="">(Select Material)</option>
+                                {% for rm in materials_list %}
+                                    <option value="{{ rm.material_id }}">{{ rm.material_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <input type="number" step="0.1" class="form-control form-control-sm" name="material2_qty" placeholder="kg">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-gold px-4"><i class="fa-solid fa-play me-2"></i>Schedule & Link Materials</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Active delay warnings -->
+    {% if delays %}
+        <div class="col-12">
+            <div class="zari-box bg-white p-3 border-danger">
+                <h6 class="text-danger font-serif-italic mb-2"><i class="fa-solid fa-circle-exclamation me-2"></i>Active Bottleneck Alerts</h6>
+                <div class="row g-2">
+                    {% for d in delays %}
+                        <div class="col-md-4">
+                            <div class="card bg-light border-danger p-2 small">
+                                <strong>Batch #{{ d.batch_id }} ({{ d.design_name }})</strong>
+                                <span class="text-danger">Reason: {{ d.reason_category }}</span>
+                                <span class="text-muted extra-small">Desc: {{ d.description }}</span>
+                                <span class="extra-small">Logged: {{ d.start_date }}</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Production Batches List -->
+    <div class="col-12">
+        <div class="zari-box bg-white p-4">
+            <h5 class="text-danger font-serif-italic mb-3"><i class="fa-solid fa-list me-2"></i>Weaving Runs History</h5>
+            <div class="table-responsive">
+                <table class="table table-hover table-heritage align-middle">
+                    <thead>
+                        <tr>
+                            <th>Batch ID</th>
+                            <th>Design Motif</th>
+                            <th>Weaver Name</th>
+                            <th>Loom Type</th>
+                            <th>Scheduled Start</th>
+                            <th>Target End</th>
+                            <th>Actual End</th>
+                            <th>Length</th>
+                            <th>Status</th>
+                            <th class="text-center">Lifecycle Operations</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in batches %}
+                            <tr>
+                                <td><code>#{{ b.batch_id }}</code></td>
+                                <td><strong>{{ b.design_name }}</strong></td>
+                                <td>{{ b.artisan_name }}</td>
+                                <td>{{ b.loom_type }}</td>
+                                <td><code>{{ b.start_date }}</code></td>
+                                <td><code>{{ b.target_completion_date }}</code></td>
+                                <td><code>{{ b.actual_completion_date or '-' }}</code></td>
+                                <td>{{ b.quantity_meters }}m</td>
+                                <td>
+                                    <span class="badge-status badge-status-{{ b.status.lower().replace(' ', '') }}">
+                                        {{ b.status }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    {% if session.get('role') in ['Admin', 'Inventory Manager'] %}
+                                        {% if b.status == 'Scheduled' %}
+                                            <form action="{{ url_for('production') }}" method="POST" class="d-inline">
+                                                <input type="hidden" name="action" value="start">
+                                                <input type="hidden" name="batch_id" value="{{ b.batch_id }}">
+                                                <button type="submit" class="btn btn-sm btn-success px-3"><i class="fa-solid fa-play me-1"></i>Start</button>
+                                            </form>
+                                        {% elif b.status == 'In Progress' %}
+                                            <!-- Complete button -->
+                                            <form action="{{ url_for('production') }}" method="POST" class="d-inline">
+                                                <input type="hidden" name="action" value="complete">
+                                                <input type="hidden" name="batch_id" value="{{ b.batch_id }}">
+                                                <button type="submit" class="btn btn-sm btn-primary px-2"><i class="fa-solid fa-circle-check me-1"></i>Complete</button>
+                                            </form>
+                                            <!-- Delay log trigger -->
+                                            <button class="btn btn-sm btn-outline-danger px-2" data-bs-toggle="collapse" data-bs-target="#delayForm{{ b.batch_id }}"><i class="fa-solid fa-triangle-exclamation me-1"></i>Delay</button>
+                                        {% else %}
+                                            <span class="text-muted small">Locked</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted small">View Only</span>
+                                    {% endif %}
+                                    
+                                    <!-- Collapsible delay form per row -->
+                                    <div class="collapse mt-2" id="delayForm{{ b.batch_id }}">
+                                        <div class="card p-2 bg-light border-danger text-start">
+                                            <form action="{{ url_for('production') }}" method="POST">
+                                                <input type="hidden" name="action" value="delay">
+                                                <input type="hidden" name="batch_id" value="{{ b.batch_id }}">
+                                                <div class="mb-2">
+                                                    <label class="extra-small text-danger font-serif-italic">Delay Category</label>
+                                                    <select class="form-select form-select-sm" name="reason_category" required>
+                                                        <option value="Material Shortage">Material Shortage</option>
+                                                        <option value="Artisan Illness">Artisan Illness</option>
+                                                        <option value="Loom Breakdown">Loom Breakdown</option>
+                                                        <option value="Power Outage">Power Outage</option>
+                                                        <option value="Design Change">Design Change</option>
+                                                        <option value="Other">Other</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="extra-small text-danger font-serif-italic">Description</label>
+                                                    <input type="text" class="form-control form-control-sm" name="description" required placeholder="Reason description">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="extra-small text-danger font-serif-italic">Date Logged</label>
+                                                    <input type="date" class="form-control form-control-sm" name="delay_start_date" required value="2026-05-23">
+                                                </div>
+                                                <button type="submit" class="btn btn-xs btn-danger w-100 py-1 font-serif-italic text-uppercase">Log Disturbance</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="10" class="text-center py-4 text-muted">No production batches found.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

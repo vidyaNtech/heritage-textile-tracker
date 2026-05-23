@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Heritage Textile Tracker | Relational Handloom Supply Chain{% endblock %}
+
+{% block content %}
+<div class="row align-items-center hero-section px-4 text-center text-lg-start position-relative">
+    <div class="hero-pattern-overlay"></div>
+    <div class="col-lg-7 px-lg-5 animate-fade-in-up">
+        <h5 class="hero-subtitle mb-2"><i class="fa-solid fa-gem text-warning me-2"></i>ROYAL INDIAN HANDLOOMS & PROVENANCE ENGINE</h5>
+        <h1 class="hero-title">Heritage Textile Intelligence System</h1>
+        <p class="lead mb-4 text-white-50">
+            A state-of-the-art DBMS architecture tracking heritage textiles—from pure zari sourcing and master weaver wages to decentralized authenticity certificates.
+        </p>
+        
+        <!-- Authenticity Search on Landing -->
+        <div class="zari-box bg-white text-dark p-4 shadow mb-4">
+            <h5 class="font-serif-italic mb-3"><i class="fa-solid fa-qrcode text-danger me-2"></i>Consumer Provenance Portal</h5>
+            <form action="{{ url_for('verify') }}" method="POST" class="row g-2">
+                <div class="col-sm-8">
+                    <input type="text" name="verification_code" class="form-control form-control-lg border-warning" placeholder="Enter Product Verification Code (e.g. TX-2026-0001)" required>
+                </div>
+                <div class="col-sm-4">
+                    <button type="submit" class="btn btn-gold btn-lg w-100"><i class="fa-solid fa-search me-1"></i>Verify Fabric</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-lg-5 text-center mt-5 mt-lg-0 position-relative animate-fade-in-up" style="animation-delay: 0.2s;">
+        <!-- Heritage Design Emblem Card -->
+        <div class="card bg-dark text-warning border-warning p-4 mx-auto shadow-lg" style="max-width: 400px; border-width: 2px;">
+            <div class="card-body">
+                <i class="fa-solid fa-seedling fa-3x mb-3 text-warning"></i>
+                <h4 class="card-title">Traditional Wefts</h4>
+                <div class="motif-icon-divider"><i class="fa-solid fa-yin-yang"></i></div>
+                <p class="card-text text-white-50 small">
+                    "Every thread spun tells a heritage story of weavers, regions, and motifs passed down across generations."
+                </p>
+                <div class="mt-4">
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-warning w-100"><i class="fa-solid fa-lock me-2"></i>Access Admin Portal</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row text-center mb-5">
+        <div class="col">
+            <h2 class="text-danger font-serif-italic">Traceability Across the Weft & Warp</h2>
+            <div class="motif-icon-divider"><i class="fa-solid fa-snowflake"></i></div>
+            <p class="text-muted">A normalized SQLite relational design tracking operations across 15 integrated modules.</p>
+        </div>
+    </div>
+
+    <div class="row g-4 px-lg-5">
+        <div class="col-md-4">
+            <div class="zari-box text-center h-100">
+                <i class="fa-solid fa-users fa-2x text-danger mb-3"></i>
+                <h4 class="h5">Artisan Ecosystem</h4>
+                <p class="text-muted small">Tracks master weaver profiles, loom status, efficiency, skill certifications, and enforces automatic wage rates.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="zari-box text-center h-100">
+                <i class="fa-solid fa-warehouse fa-2x text-danger mb-3"></i>
+                <h4 class="h5">Supply Chain Audits</h4>
+                <p class="text-muted small">Monitors natural dyes vs synthetic dyes, metallic zari inputs, low-stock reorder thresholds, and registers supply lead times.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="zari-box text-center h-100">
+                <i class="fa-solid fa-check-double fa-2x text-danger mb-3"></i>
+                <h4 class="h5">QC & Quality Provenance</h4>
+                <p class="text-muted small">Automates quality metrics, registers rework assignments for defect logs, and calculates high-grade bonuses.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

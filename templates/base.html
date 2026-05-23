@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Heritage Textile Intelligence{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Heritage CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-heritage-pattern">
+
+    <!-- Navbar Section -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-heritage sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fa-solid fa-feather-pointed me-2"></i>Heritage Textile Tracker
+            </a>
+            <button class="navbar-collapse navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{{ url_for('index') }}">
+                            <i class="fa-solid fa-house me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/verify' %}active{% endif %}" href="{{ url_for('verify') }}">
+                            <i class="fa-solid fa-shield-halved me-1"></i>Verify Authenticity
+                        </a>
+                    </li>
+                    
+                    {% if session.get('user_id') %}
+                        <!-- Admin Dashboard Routes -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                                <i class="fa-solid fa-chart-line me-1"></i>Dashboard
+                            </a>
+                        </li>
+
+                        {# ---- ADMIN: Full access to all modules ---- #}
+                        {% if session.get('role') == 'Admin' %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="mgmtDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-sliders me-1"></i>Operations
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark bg-dark border-secondary" aria-labelledby="mgmtDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('artisans') }}"><i class="fa-solid fa-users me-2"></i>Artisans</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('inventory') }}"><i class="fa-solid fa-warehouse me-2"></i>Inventory</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('production') }}"><i class="fa-solid fa-arrows-spin me-2"></i>Production</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('qc') }}"><i class="fa-solid fa-check-double me-2"></i>Quality Control</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('wages') }}"><i class="fa-solid fa-indian-rupee-sign me-2"></i>Artisan Wages</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="salesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-basket-shopping me-1"></i>Sales & Logistics
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-dark bg-dark border-secondary" aria-labelledby="salesDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('orders') }}"><i class="fa-solid fa-file-invoice-dollar me-2"></i>Orders & Customers</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('shipments') }}"><i class="fa-solid fa-truck-fast me-2"></i>Shipments</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/analytics' %}active{% endif %}" href="{{ url_for('analytics') }}">
+                                <i class="fa-solid fa-chart-pie me-1"></i>BI Analytics
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {# ---- INVENTORY MANAGER: Inventory, Production, Shipments ---- #}
+                        {% if session.get('role') == 'Inventory Manager' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/inventory' %}active{% endif %}" href="{{ url_for('inventory') }}">
+                                <i class="fa-solid fa-warehouse me-1"></i>Inventory
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/production' %}active{% endif %}" href="{{ url_for('production') }}">
+                                <i class="fa-solid fa-arrows-spin me-1"></i>Production
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/shipments' %}active{% endif %}" href="{{ url_for('shipments') }}">
+                                <i class="fa-solid fa-truck-fast me-1"></i>Shipments
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {# ---- QC INSPECTOR: Quality Control, Artisans ---- #}
+                        {% if session.get('role') == 'QC Inspector' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/qc' %}active{% endif %}" href="{{ url_for('qc') }}">
+                                <i class="fa-solid fa-check-double me-1"></i>Quality Control
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/artisans' %}active{% endif %}" href="{{ url_for('artisans') }}">
+                                <i class="fa-solid fa-users me-1"></i>Artisans
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {# ---- FINANCE MANAGER: Wages, Orders, Artisans, Analytics ---- #}
+                        {% if session.get('role') == 'Finance Manager' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/wages' %}active{% endif %}" href="{{ url_for('wages') }}">
+                                <i class="fa-solid fa-indian-rupee-sign me-1"></i>Wages
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/orders' %}active{% endif %}" href="{{ url_for('orders') }}">
+                                <i class="fa-solid fa-file-invoice-dollar me-1"></i>Orders
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/artisans' %}active{% endif %}" href="{{ url_for('artisans') }}">
+                                <i class="fa-solid fa-users me-1"></i>Artisans
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/analytics' %}active{% endif %}" href="{{ url_for('analytics') }}">
+                                <i class="fa-solid fa-chart-pie me-1"></i>Analytics
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        <li class="nav-item ms-lg-3 text-light">
+                            <span class="badge border border-warning text-warning p-2">
+                                <i class="fa-solid fa-user-shield me-1"></i>{{ session.get('role') }}: {{ session.get('username') }}
+                            </span>
+                        </li>
+                        <li class="nav-item ms-lg-2">
+                            <a class="btn btn-outline-danger btn-sm text-light px-3 py-1" href="{{ url_for('logout') }}">
+                                <i class="fa-solid fa-power-off me-1"></i>Logout
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item nav-item-btn ms-lg-3">
+                            <a class="nav-link text-warning" href="{{ url_for('login') }}">
+                                <i class="fa-solid fa-lock me-1"></i>Staff Portal
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show border border-{{ category }}" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content Block -->
+    <div class="container-fluid px-4 py-3">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-4 bg-maroon-zari text-center zari-border-top">
+        <div class="container">
+            <span class="font-serif-italic">Preserving Heritage Through Tech Integration</span><br>
+            <small class="text-white-50">&copy; 2026 Heritage Textile Intelligence & Supply Chain Management. SQLite Relational System.</small>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle JS (with Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

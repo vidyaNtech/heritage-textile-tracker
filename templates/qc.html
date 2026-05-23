@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Quality Control | Heritage Textile Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="text-danger font-serif-italic"><i class="fa-solid fa-check-double me-2"></i>Quality Control & Audits</h2>
+        <p class="text-muted">Perform quality checks on completed weaves. Automated triggers apply wage adjustments and log rework pipelines.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-2 mt-md-0">
+        {% if session.get('role') in ['Admin', 'QC Inspector'] %}
+            {% if completed_batches_select %}
+                <button class="btn btn-maroon" data-bs-toggle="collapse" data-bs-target="#addInspectionForm">
+                    <i class="fa-solid fa-file-signature me-2"></i>Log QC Inspection
+                </button>
+            {% else %}
+                <button class="btn btn-secondary" disabled title="No completed batches waiting for inspection">
+                    <i class="fa-solid fa-circle-minus me-2"></i>No Batches Pending Inspection
+                </button>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Collapsible Add Inspection Form -->
+{% if completed_batches_select %}
+<div class="collapse mb-4" id="addInspectionForm">
+    <div class="zari-box bg-white p-4">
+        <h5 class="text-danger font-serif-italic mb-3"><i class="fa-solid fa-magnifying-glass me-2"></i>Submit Quality Audit Report</h5>
+        <form action="{{ url_for('qc') }}" method="POST">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small">Select Finished Batch</label>
+                    <select class="form-select" name="batch_id" required>
+                        {% for b in completed_batches_select %}
+                            <option value="{{ b.batch_id }}">Batch #{{ b.batch_id }} - {{ b.design_name }} ({{ b.quantity_meters }}m)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Quality Score (0-100)</label>
+                    <input type="number" step="0.1" class="form-control" name="quality_score" min="0" max="100" required placeholder="e.g. 96.5">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Audit Result</label>
+                    <select class="form-select" name="status" required>
+                        <option value="Passed">Passed</option>
+                        <option value="Rework Required" selected>Rework Required</option>
+                        <option value="Failed">Failed</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Inspection Date</label>
+                    <input type="date" class="form-control" name="inspection_date" required value="2026-05-23">
+                </div>
+                <div class="col-12">
+                    <label class="form-label small">Defects Found / Comments</label>
+                    <textarea class="form-control" name="defects_found" rows="2" placeholder="Describe warp tension, uneven dyeing, zari breakage, or enter 'None' for pass..."></textarea>
+                </div>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-gold px-4"><i class="fa-solid fa-stamp me-2"></i>Save QC Record</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <!-- Rework Loops Management (Active pipelines) -->
+    <div class="col-12">
+        <div class="zari-box bg-white p-4">
+            <h5 class="text-danger font-serif-italic mb-3"><i class="fa-solid fa-rotate-left me-2"></i>Rework Loop Logs (Trigger Generated)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover table-heritage align-middle">
+                    <thead>
+                        <tr>
+                            <th>Rework ID</th>
+                            <th>Insp. ID</th>
+                            <th>Motif Name</th>
+                            <th>Artisan Partner</th>
+                            <th>QC Score</th>
+                            <th>Defect Type</th>
+                            <th>Instructions</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in rework_list %}
+                            <tr>
+                                <td><code>#RW-{{ "%03d"|format(r.rework_id) }}</code></td>
+                                <td><code>#{{ r.inspection_id }}</code></td>
+                                <td><strong>{{ r.design_name }}</strong></td>
+                                <td>{{ r.artisan_name }}</td>
+                                <td><span class="text-danger">{{ r.quality_score }}%</span></td>
+                                <td><span class="text-danger font-serif-italic">{{ r.defect_type }}</span></td>
+                                <td class="small">{{ r.rework_instructions }}</td>
+                                <td>
+                                    <span class="badge-status badge-status-{{ r.status.lower().replace(' ', '') }}">
+                                        {{ r.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-3 text-muted">No active rework cycles. All inspections are passing.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inspections list -->
+    <div class="col-12">
+        <div class="zari-box bg-white p-4">
+            <h5 class="text-danger font-serif-italic mb-3"><i class="fa-solid fa-clipboard-list me-2"></i>Completed Audits History</h5>
+            <div class="table-responsive">
+                <table class="table table-hover table-heritage align-middle">
+                    <thead>
+                        <tr>
+                            <th>Insp ID</th>
+                            <th>Batch ID</th>
+                            <th>Design Motif</th>
+                            <th>Inspector</th>
+                            <th>Inspection Date</th>
+                            <th>Quality Score</th>
+                            <th>Status</th>
+                            <th>Details of Defects</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in inspections_list %}
+                            <tr>
+                                <td><code>#INS-{{ "%04d"|format(i.inspection_id) }}</code></td>
+                                <td><code>#{{ i.batch_id }}</code></td>
+                                <td><strong>{{ i.design_name }}</strong></td>
+                                <td>{{ i.inspector_name }}</td>
+                                <td><code>{{ i.inspection_date }}</code></td>
+                                <td>
+                                    <strong class="{% if i.quality_score >= 90.0 %}text-success{% else %}text-danger{% endif %}">
+                                        {{ i.quality_score }}%
+                                    </strong>
+                                </td>
+                                <td>
+                                    <span class="badge-status badge-status-{{ i.status.lower().replace(' ', '') }}">
+                                        {{ i.status }}
+                                    </span>
+                                </td>
+                                <td class="small">{{ i.defects_found or 'None' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">No quality control inspections have been recorded.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Authenticity Verification | Heritage Textile Tracker{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    <!-- Header -->
+    <div class="text-center mb-5">
+        <h2 class="text-danger font-serif-italic"><i class="fa-solid fa-shield-halved me-2"></i>Handloom Authenticity Portal</h2>
+        <div class="motif-icon-divider"><i class="fa-solid fa-yin-yang"></i></div>
+        <p class="text-muted col-lg-8 mx-auto">
+            Consumers and boutiques can audit the provenance, raw materials, weaver wage records, and quality check statuses of heritage weaves using their unique identification code.
+        </p>
+    </div>
+
+    <!-- Search Input -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8 col-lg-6">
+            <div class="zari-box bg-white p-4">
+                <form action="{{ url_for('verify') }}" method="POST" class="input-group">
+                    <input type="text" name="verification_code" class="form-control form-control-lg border-warning" placeholder="Enter Serial Code (e.g. TX-2026-0001)" value="{{ code or '' }}" required>
+                    <button type="submit" class="btn btn-gold px-4"><i class="fa-solid fa-qrcode me-2"></i>Verify Registry</button>
+                </form>
+                <div class="text-center mt-3">
+                    <small class="text-muted">Sample code for evaluation: <code class="text-danger border-bottom border-danger">TX-2026-0001</code></small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certificate Render -->
+    {% if searched %}
+        {% if cert %}
+            <div class="certificate-container animate-fade-in-up">
+                <div class="certificate-watermark">GENUINE</div>
+                <div class="certificate-border-line">
+                    <!-- Certificate Header -->
+                    <div class="text-center mb-4">
+                        <div class="certificate-seal mb-2"><i class="fa-solid fa-award"></i></div>
+                        <h3 class="text-danger font-serif-italic mb-0" style="letter-spacing: 2px;">Certificate of Heritage Provenance</h3>
+                        <span class="text-muted small font-serif-italic">AUTHENTIC INDIAN HANDLOOM REGISTRY</span>
+                        <div class="motif-icon-divider"><i class="fa-solid fa-leaf"></i></div>
+                    </div>
+
+                    <!-- Certificate Content Details -->
+                    <div class="certificate-content row g-4 px-2 text-dark">
+                        <div class="col-md-6 border-end border-light pr-4">
+                            <h6 class="text-danger font-serif-italic mb-2"><i class="fa-solid fa-feather-pointed me-2"></i>Fabric Origin & Motif</h6>
+                            <p class="mb-2"><strong>Motif Name:</strong> {{ cert.motif_name }}</p>
+                            <p class="mb-2"><strong>Regional Origin:</strong> {{ cert.regional_origin }}</p>
+                            <p class="mb-3 text-muted small"><strong>Cultural Motifs:</strong> {{ cert.cultural_significance }}</p>
+
+                            <h6 class="text-danger font-serif-italic mb-2"><i class="fa-solid fa-hands-holding-child me-2"></i>Master Artisan Weaving</h6>
+                            <p class="mb-1"><strong>Lead Weaver:</strong> {{ cert.master_artisan }}</p>
+                            <p class="mb-1"><strong>Skill Grade:</strong> {{ cert.skill_level }}</p>
+                            <p class="mb-0"><strong>Experience:</strong> {{ cert.experience_years }} years in handlooms</p>
+                        </div>
+
+                        <div class="col-md-6 pl-4">
+                            <h6 class="text-danger font-serif-italic mb-2"><i class="fa-solid fa-dolly me-2"></i>Traceable Material Ledger</h6>
+                            <p class="mb-2 text-muted small"><strong>Material & Dye Details:</strong><br>{{ cert.raw_materials_used or 'Organic Cotton, Silk Thread' }}</p>
+                            
+                            <h6 class="text-danger font-serif-italic mb-2"><i class="fa-solid fa-circle-check me-2"></i>Quality Control Audit</h6>
+                            <p class="mb-2"><strong>Quality Score:</strong> <strong class="text-success">{{ cert.certified_quality }}% (Passed)</strong></p>
+                            <p class="mb-0 text-muted extra-small"><strong>Loom Machinery:</strong> {{ cert.weaving_loom }}</p>
+                            <p class="mb-0 text-muted extra-small"><strong>Verification Hits:</strong> Verified {{ cert.verification_count }} times</p>
+                        </div>
+
+                        <div class="col-12 mt-4 pt-3 border-top border-light text-center">
+                            <div class="bg-light p-2 rounded">
+                                <span class="extra-small text-muted font-serif-italic d-block mb-1">Decentralized Cryptographic Ledger Audit Proof</span>
+                                <code class="text-danger extra-small fw-bold word-break-all">{{ cert.authenticity_proof }}</code>
+                            </div>
+                            <div class="mt-3">
+                                <span class="badge bg-warning text-dark border border-warning small py-1 px-3">
+                                    <i class="fa-solid fa-certificate me-1"></i>VERIFIED HANDLOOM
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Verification Error -->
+            <div class="row justify-content-center animate-fade-in-up">
+                <div class="col-md-8 col-lg-6">
+                    <div class="alert alert-danger border-danger p-4 text-center">
+                        <i class="fa-solid fa-triangle-exclamation fa-3x mb-3 text-danger"></i>
+                        <h5 class="font-serif-italic">Counterfeit Warning / Invalid Code</h5>
+                        <p class="text-muted small mb-0">
+                            The serial code <strong>"{{ code }}"</strong> was not found in our SQLite central registry. Verify spelling or contact administrative support to verify fabric tracking codes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
